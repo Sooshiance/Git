@@ -1,26 +1,25 @@
-use std::env;
 use std::fs;
+use std::io::{self, Write};
 use std::path::Path;
 
-pub fn initializtor() {
-    let current_dir = env::current_dir().expect("Failed to get current directory");
-    let git_dir = current_dir.join(".git");
+pub fn init_repo(path: &str) -> io::Result<()> {
+    let git_dir = Path::new(path).join(".git");
 
-    if git_dir.exists() {
-        println!("A .git directory already exists in this location.");
-        return;
-    }
+    // Create .git directory
+    fs::create_dir_all(&git_dir)?;
 
-    fs::create_dir(&git_dir).expect("Failed to create .git directory");
+    // Create necessary subdirectories
+    fs::create_dir_all(git_dir.join("objects"))?;
+    fs::create_dir_all(git_dir.join("refs/heads"))?;
 
-    fs::create_dir(git_dir.join("branches")).expect("Failed to create branches directory");
-    fs::create_dir(git_dir.join("hooks")).expect("Failed to create hooks directory");
-    fs::create_dir(git_dir.join("info")).expect("Failed to create info directory");
-    fs::create_dir(git_dir.join("objects")).expect("Failed to create objects directory");
-    fs::create_dir(git_dir.join("refs")).expect("Failed to create refs directory");
-    fs::create_dir(git_dir.join("refs/heads")).expect("Failed to create refs/heads directory");
+    // Create HEAD file
+    let mut head_file = fs::File::create(git_dir.join("HEAD"))?;
+    writeln!(head_file, "ref: refs/heads/master")?;
 
-    fs::write(git_dir.join("HEAD"), "ref: refs/heads/master").expect("Failed to create HEAD file");
-
-    println!("Initialized empty Git repository in {}", git_dir.display());
+    // Create config file (optional)
+    let mut config_file = fs::File::create(git_dir.join("config"))?;
+    writeln!(config_file, "[core]")?;
+    writeln!(config_file, "\trepositoryformatversion = 0")?;
+    
+    Ok(())
 }
