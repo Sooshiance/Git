@@ -10,27 +10,21 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 PARENT_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-load_dotenv(PARENT_DIR / ".env")
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -50,6 +44,8 @@ INSTALLED_APPS = [
     # third parties
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "django.contrib.postgres",  # Required for TimescaleDB
+    "timescale.db.models.fields",  # If using TimescaleDB models
     # local apps
     "apps.account.apps.AccountConfig",
     "apps.patient.apps.PatientConfig",
@@ -98,12 +94,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "timescale.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-    },
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "db",
+        "PORT": "5432",
+        "OPTIONS": {"options": "-c search_path=public"},
+    }
 }
 
 
